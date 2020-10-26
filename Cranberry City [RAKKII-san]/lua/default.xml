@@ -1,0 +1,1503 @@
+<ActorFrame
+InitCommand="%function(self)
+
+	checked = false;
+			slumpo = false --gotta get 86% to get this difficulty, which is an A+
+			for pn=1,2 do
+				if GAMESTATE:IsPlayerEnabled(pn-1) then
+					if GAMESTATE:GetCurrentSteps(pn-1):GetDifficulty() == 4 then
+						slumpo = true
+					end
+				end
+			end
+	
+	nitg_version = FUCK_EXE and tonumber(GAMESTATE:GetVersionDate()) >= 20200112 --NotITG version number to check for, v4 by default
+	
+	if not nitg_version then
+		SCREENMAN:SystemMessage('Outdated version of NotITG detected, mods will not work');
+	end
+	
+	songName = GAMESTATE:GetCurrentSong():GetSongDir();
+	
+	m_bl = 60/138 --use this to define length of a beat for use in the rest of the song
+	sw = SCREEN_WIDTH
+	sh = SCREEN_HEIGHT
+	scx = SCREEN_CENTER_X
+	scy = SCREEN_CENTER_Y
+	function Plr(pn)
+		return _G['P'..pn]
+	end
+end"
+><children><ActorFrame Condition="nitg_version"
+OnCommand="%function(self)
+	nvidia = false
+	alphamult = 1
+	if string.find(string.lower(PREFSMAN:GetPreference('LastSeenVideoDriver')), 'nvidia') or string.find(string.lower(DISPLAY:GetVendor()),'nvidia') then
+		Trace('NVidia graphics driver detected.')
+		Trace('AFT multiplier set to 0.9')
+		nvidia = true
+		alphamult = 0.9
+	end
+	if not string.find(string.lower(PREFSMAN:GetPreference('VideoRenderers')), 'opengl')
+	or string.find(string.lower(PREFSMAN:GetPreference('VideoRenderers')), 'd3d')
+	and string.find(string.lower(PREFSMAN:GetPreference('VideoRenderers')), 'opengl') 
+	and string.find(string.lower(PREFSMAN:GetPreference('VideoRenderers')), 'd3d') < 
+	string.find(string.lower(PREFSMAN:GetPreference('VideoRenderers')), 'opengl') then
+		SCREENMAN:SystemMessage('D3D Video Renderer detected. Expect textures to fail.');
+	end
+end"
+><children>
+
+	<Layer
+		Type="Quad"
+		InitCommand="hidden,1"
+		OnCommand="sleep,1000"
+	/>
+	
+	<Layer File="modhelpers" />
+	<Layer File="easing" />
+	<Layer File="spellcards" />
+	
+	<Layer
+		Type="Quad"
+		OnCommand="hidden,1"
+		InitCommand="%function(self)
+		
+			checked = false;
+			slumpo = false --gotta get 86% to get this difficulty, which is an A+
+			for pn=1,2 do
+				if GAMESTATE:IsPlayerEnabled(pn-1) then
+					if GAMESTATE:GetCurrentSteps(pn-1):GetDifficulty() == 4 then
+						slumpo = true
+					end
+				end
+			end
+		
+			---------------------------------------------------------
+			---------DOCUMENTATION-----------------------------------
+			---------------------------------------------------------
+			
+			--function perframe( beat, endBeat )
+				--return true if the current beat is between 'beat' and 'endBeat'
+			
+			--function mod_shader(beat,key,which)
+				--turn on shader key at specified beat (up to 10 keys available, defined by 'which' = 0-9
+				
+			--function mod_insert(beat,len,mod,len_or_end,pn)
+				--insert mod into beat mods table
+			--function mod_insert2(time,len,mod,len_or_end,pn)
+				--insert mod into time mods table
+			--function mod_ease(beat, len, start_strength, end_strength, mod, len_or_end, ease_type, pn, sustain, opt1, opt2)
+				--insert mod into ease mods table
+			--function mod_perframe(start, end, function(beat, deltatime))
+				--insert function into perframe reader
+				
+			--function mod_message(beat,msg,persistent)
+				--insert something into the actions table.
+				--msg can also be a function. If string, a message gets broadcast at that beat
+				--if 'persistent' is true, message will run even if editor starts at a beat past it
+				
+			--function mod_blacklist(t,n)
+				--check if number n occurs in table t
+				--useful for doing 'every beat EXCEPT the contents of t'
+				
+			--function simple_m0d(beat,strength,mult,mod)
+			--function simple_m0d2(beat,strength,mult,mod,pn)
+			--function simple_m0d3(beat,strength,duration,bpm,mod,pn)
+				--activate mods at specific beat but also deactivate them
+				
+			--function mod_wiggle(beat,num,div,amt,speed,mod,pn,first)
+				--alternates a mod back and forth before resetting to 0
+				
+			--function mod_spring(beat,strength,num,mod,pn)
+				--like mod_wiggle, but springier
+			
+			--function mod_springt(time,strength,dur,mod,pn)
+				--time-based per-frame alternating mod that decreases based on how much time is left.
+					--think doorstopper
+			
+			--function mod_springt2(time,strength,dur,mod,pn)
+				--time-based per-frame alternating mod
+			
+			--function mod_spring_adjustable(beat,strength,num,period,mod,pn, first)
+				--it's not very good
+			
+			--function mod_beat(beat,strength,pn)
+				--turns on beat for the beat specified, at the desired strength	
+			
+			--function switcheroo_add(beat,which,speed,len,pn)
+				--adds a column swap at the desired beat
+			--[[	switcheroos = {normal = {0,0}, ldur = {0,0}, reset = {0,0},
+					flip = {100,0}, rudl = {100,0}, invert = {0,100}, dlru = {0,100},
+					ludr = {25,-75}, rdul = {75,75}, drlu = {25,125}, ulrd = {75,-125}, urld = {100,-100}}
+			]]
+			
+			--function mod_sugarkiller(beat,duration,speed,minstealth,maxstealth,pn)
+				--portable version of the effect from sugarkill X
+			
+			--function mod_bounce(beat,length,start,apex,mod,ease_type,pn)
+			--function func_bounce(beat,length,start,apex,function,ease_type)
+				--eases out from start to apex, then eases back in from apex to start
+				--ease_type should be a string, i.e. 'Quad', 'Cubic', 'Circ'
+			
+			
+			
+			--function modulo(a, b)
+				--returns the remainder when a is divided by b, works properly with negatives unlike math.mod
+			
+			--function randomXD(t)
+				--returns a pseudo-random number between 0 and 1 seeded based on the given argument
+				--returns 0.5 if t is 0 (useful sometimes!)
+				
+			---------------------------------------------------------
+			--------END DOCUMENTATION--------------------------------
+			---------------------------------------------------------
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			init_modsp1 = '';
+			init_modsp2 = '';
+			
+			mod_plr = {};
+			
+			mod_firstSeenBeat = GAMESTATE:GetSongBeat(); --necessary to prevent long freezes
+			local l = 'len' -- these are shortcuts; include them and memorize them
+			local e = 'end'
+			local m = mod_insert
+			local me = mod_ease
+			local mb = mod_bounce
+			local mm = mod_message -- taro uses m2
+			local pi = 3.1415926;
+			
+---------------------------------------------------------------------------------------
+----------------------Begin tables 'n stuff--------------------------------------------
+---------------------------------------------------------------------------------------
+
+			--beat based mods
+			--{beat_start, beat_end, mods, len_or_end, player_number}
+			mods = {
+				{0,9999,'*2 2.25x, *-1 overhead, *-1 approachtype, *-1 dizzyholds, *-1 stealthpastreceptors, *-1 modtimer','end'},
+				{12,4,'*2.25 400 centered2',l},
+
+			}
+			
+			--beat-based ease mods
+			--{beat_start, beat_end, mod_start, mod_end, mod/function, len_or_end, ease_type, player_number, sustainbeats, optional_param1, optional_param2}
+			--valid ease types are:
+				--linear
+				--inQuad    outQuad    inOutQuad    outInQuad
+				--inCubic   outCubic   inOutCubic   outInCubic
+				--inQuart   outQuart   inOutQuart   outInQuart
+				--inQuint   outQuint   inOutQuint   outInQuint
+				--inSine    outSine    inOutSine    outInSine
+				--inExpo    outExpo    inOutExpo    outInExpo
+				--inCirc    outCirc    inOutCirc    outInCirc
+				--inElastic outElastic inOutElastic outInElastic    --can take 2 optional parameters - amplitude & period
+				--inBack    outBack    inOutBack    outInBack       --can take 1 optional parameter  - spring amount
+				--inBounce  outBounce  inOutBounce  outInBounce
+				
+			mods_ease = {
+				-- EXAMPLE TWEEN: from beat 0 to 4, make rotationz go from 360 to 0 with the inOutBack tween
+				--{0, 4, 360, 0, 'rotationz', 'len', inOutBack},
+				-- fade in
+				{0,1,100,100,'*-1 dark',l,linear},
+				{1,2.75,100,0,'dark',l,inCubic},
+				{1,3,50,0,'expand',l,inQuint},
+				{1,2.875,-30,0,'flip',l,inQuint},
+				{1,2.875,10,0,'invert',l,inQuint},
+				{1,2.875,200*pi,0,'confusionoffset',l,linear},
+				{1,3,-40,0,'movey',l,inQuint},
+				-- intro
+				{4,0.75,0,-100,'tiny0',l,outExpo},
+				{4+0.75,0.75,0,-100,'tiny1',l,outExpo},
+				{4+0.75*2,0.75,0,-100,'tiny2',l,outExpo},
+				{4+0.75*3,0.75,0,-100,'tiny3',l,outExpo},
+				{4,0.25,0,-25,'reverse0',l,outExpo},
+				{4.25,0.5,-25,0,'reverse0',l,inCirc},
+				{4.75,0.25,0,-25,'reverse1',l,outExpo},
+				{5,0.5,-25,0,'reverse1',l,inCirc},
+				{5.5,0.25,0,-25,'reverse2',l,outExpo},
+				{5.75,0.5,-25,0,'reverse2',l,inCirc},
+				{6.25,0.25,0,-25,'reverse3',l,outExpo},
+				{6.5,0.5,-25,0,'reverse3',l,inCirc},
+				{7,2,0,400*pi,'confusionoffset',l,outExpo},
+				{9,3,400*pi,0,'confusionoffset',l,inCirc},
+				{12,0.5,0,0,'confusionoffset',l,linear},
+				{7,1,0,-200,'tiny',l,outExpo},
+				{8,3,-200,0,'tiny',l,inCirc},
+				{11.5,0.25,0,-12,'cross',l,outBack},
+				{11.5,0.25,0,6,'reverse',l,outBack},
+				{11.75,0.25,-12,12,'cross',l,outBack},
+				{11.75,0.25,6,-6,'reverse',l,outBack},
+				
+				--intro skew
+				{4+0.75*0,0.75,0,-30,'skewx',l,outBack},
+				{4+0.75*0,0.75,0,30,'skewy',l,outBack},
+				{4+0.75*0,0.75,0,15,'rotationx',l,outBack},
+				{4+0.75*0,0.75,0,30,'rotationy',l,outBack},
+				{4+0.75*1,0.75,-30,30,'skewx',l,outBack},
+				{4+0.75*1,0.75,30,-30,'skewy',l,outBack},
+				{4+0.75*1,0.75,15,-30,'rotationx',l,outBack},
+				{4+0.75*1,0.75,30,-15,'rotationy',l,outBack},
+				{4+0.75*2,0.75,30,-30,'skewx',l,outBack},
+				{4+0.75*2,0.75,30,30,'skewy',l,outBack},
+				{4+0.75*2,0.75,-30,-15,'rotationx',l,outBack},
+				{4+0.75*2,0.75,-15,-30,'rotationy',l,outBack},
+				{4+0.75*3,0.75,-30,30,'skewx',l,outBack},
+				{4+0.75*3,0.75,30,-30,'skewy',l,outBack},
+				{4+0.75*3,0.75,-15,30,'rotationx',l,outBack},
+				{4+0.75*3,0.75,-30,15,'rotationy',l,outBack},
+				--arrowpaths
+				{4,0.375,0,100,'arrowpath0',l,outExpo},
+				{4+0.75*0.5,0.375,100,0,'arrowpath0',l,outExpo},
+				{4+0.75*1,0.375,0,100,'arrowpath1',l,outExpo},
+				{4+0.75*1.5,0.375,100,0,'arrowpath1',l,outExpo},
+				{4+0.75*2,0.375,0,100,'arrowpath2',l,outExpo},
+				{4+0.75*2.5,0.375,100,0,'arrowpath2',l,outExpo},
+				{4+0.75*3,0.375,0,100,'arrowpath3',l,outExpo},
+				{4+0.75*3.5,0.375,100,0,'arrowpath3',l,outExpo},
+				
+				-- more bumpiness in the intro, yell at me for the code
+				{4,0.25,-50,50,'tiny1',l,outExpo},
+				{4+0.25*1,0.25,50,0,'tiny1',l,outExpo},
+				{4+0.25*1,0.25,-50,50,'tiny2',l,outExpo},
+				{4+0.25*2,0.25,50,0,'tiny2',l,outExpo},
+				{4+0.25*2,0.25,-50,50,'tiny3',l,outExpo},
+				{4+0.25*3,0.25,50,0,'tiny3',l,outExpo},
+				{4+0.25*3,0.25,-50,50,'tiny0',l,outExpo},
+				{4+0.25*4,0.25,50,0,'tiny0',l,outExpo},
+				{4+0.25*4,0.25,-50,50,'tiny2',l,outExpo},
+				{4+0.25*5,0.25,50,0,'tiny2',l,outExpo},
+				{4+0.25*5,0.25,-50,50,'tiny3',l,outExpo},
+				{4+0.25*6,0.25,50,0,'tiny3',l,outExpo},
+				{4+0.25*6,0.25,-50,50,'tiny0',l,outExpo},
+				{4+0.25*7,0.25,50,0,'tiny0',l,outExpo},
+				{4+0.25*7,0.25,-50,50,'tiny1',l,outExpo},
+				{4+0.25*8,0.25,50,0,'tiny1',l,outExpo},
+				{4+0.25*8,0.25,-50,50,'tiny3',l,outExpo},
+				{4+0.25*9,0.25,50,0,'tiny3',l,outExpo},
+				{4+0.25*9,0.25,-50,50,'tiny0',l,outExpo},
+				{4+0.25*10,0.25,50,0,'tiny0',l,outExpo},
+				{4+0.25*10,0.25,-50,50,'tiny1',l,outExpo},
+				{4+0.25*11,0.25,50,0,'tiny1',l,outExpo},
+				{4+0.25*11,0.24,-50,50,'tiny2',l,outExpo},
+				{6.99,0.01,50,0,'tiny1',l,outExpo},
+				-- intro w/notes
+				{16,0.25,200,0,'centered2',l,outBack},
+				
+				
+				-- EXAMPLE TWEEN: from beat 4 to 8, rotate topscreen from 360 to 0 with the outBack tween
+				--{4, 4, 360, 0, function(a) SCREENMAN:GetTopScreen():rotationz(a) end, 'len', outBack},
+			}
+			
+			--time based mods
+			mod_time = 0;
+			--{time_start, time_end, mods, len_or_end, player_number}
+			mods2 = {
+			}
+			
+			-- you can now write perframe stuff without having to scroll down!
+			-- {beat_start,beat_end,function(beat,deltatime)}
+			mod_perframes = {
+				--{18,24,function(beat,deltatime)
+					-- do stuff every frame from beat 18-24
+					-- print(beat,deltatime)
+				--end},
+			}
+			
+			--this is both a message broadcaster and a function runner
+			--if you put {beat,'String'}, then 'String' is broadcast as a message on that beat
+			--if you put {beat,function() somecode end}, then function() is run at that beat
+			--see example on beat 0
+			
+			curaction = 1;
+			--{beat,thing,persists}
+			mod_actions = {
+				{0,'GetProxy',true},
+				{0,function()
+					for pn=1,2 do
+						local a = Plr(pn)
+						if a then
+							a:GetChild('Judgment'):hidden(1)
+							a:GetChild('Combo'):hidden(1)
+							a:SetFarDist(10000)
+						end
+					end
+					
+					for pn=1,2 do
+						local d = 0.25; if pn == 2 then d = 0.75 end
+						local b = _G['jud'..pn..'p']
+						if b then
+							b:hidden(0);
+							b:basezoomx(0.75);
+							b:basezoomy(0.75);
+							b:x(SCREEN_WIDTH*d)
+							b:y(SCREEN_HEIGHT*0.5)
+						end
+						local c = _G['com'..pn..'p']
+						if c then
+							c:hidden(0);
+							c:basezoomx(0.75);
+							c:basezoomy(0.75);
+							c:x(SCREEN_WIDTH*d)
+							c:y(SCREEN_HEIGHT*0.5)
+						end
+					end
+				end,true},
+			}
+			
+			-- start the loops
+			for i = 10,11.5,0.5 do
+				me(i,0.25,-50,50,'skewx',l,linear)
+				me(i+0.25,0.25,50,-50,'skewx',l,linear)
+			end
+			m(12,0.1,'*-1 no skewx',l)
+			for i = 13,15,1 do
+				m(i,0.125,'*-1 0 centered2',l)
+			end
+			for i = 12,14,1 do
+				me(i,0.5,0,-100,'mini',l,outQuart)
+				me(i+0.5,0.5,-100,0,'mini',l,outQuart)
+				me(i,0.25,0,-12,'cross',l,outBack)
+			end
+			
+			local turntables = {
+				{14.500,1},
+				{46.500,1},
+				{78.500,1},
+				{110.500,1},
+				{142.500,1},
+				{174.500,1},
+				{206.500,1},
+				{238.500,1},
+			}
+			for i,v in pairs(turntables) do --i,v tables 101
+				if v[2] == 1 then
+					me(v[1],0.25,30,-30,'rotationz',l,linear)
+					me(v[1]+0.25,0.25,-30,30,'rotationz',l,linear)
+					me(v[1]+0.5,0.5,20,-360,'rotationz',l,linear)
+					me(v[1]+1,0.5,15,0,'rotationz',l,linear)
+				end
+			end
+			for i = 16,32,16 do
+				me(i,0.333,0,24,'cross',l,outExpo)
+				me(i,0.333,0,12,'reverse',l,outExpo)
+				me(i,0.333,0,-24,'flip',l,outExpo)
+				me(i,0.333,0,24,'invert',l,outExpo)
+				me(i,0.333,0,-100,'tiny',l,outExpo)
+				m(i+0.333,0.5,'no cross no reverse no flip no invert no tiny',l)
+			end
+			
+			--don't ask why I named this buttslap
+			local buttslap = { 
+				{17.833,1},
+				{21.833,2},
+				{25.833,1},
+				{33.833,1},
+				{37.833,2},
+				{41.833,1},
+			}
+			for i,v in pairs(buttslap) do
+				if v[2] == 1 then
+				me(v[1],0.25,-50,50,'skewx',l,outExpo)
+				me(v[1]+0.333,0.167,50,-50,'skewx',l,outExpo)
+				me(v[1]+0.5,0.5,-50,50,'skewx',l,outExpo)
+				me(v[1]+1,0.167,50,50,'skewx',l,outExpo)
+				me(v[1]+1.167,0.25,50,-50,'skewx',l,outExpo)
+				elseif v[2] == 2 then
+				me(v[1],0.25,50,-50,'skewx',l,outExpo)
+				me(v[1]+0.333,0.167,-50,50,'skewx',l,outExpo)
+				me(v[1]+0.5,0.5,50,-50,'skewx',l,outExpo)
+				me(v[1]+1,0.167,-50,-50,'skewx',l,outExpo)
+				me(v[1]+1.167,0.25,-50,50,'skewx',l,outExpo)
+				end
+			end
+			for i = 16,40,4 do --does the funny bounce
+				me(i,1,-20,20,'rotationz',l,outExpo)
+				me(i,1,20,-20,'rotationy',l,outExpo)
+				me(i,1,-12,12,'alternate',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+				me(i+1,1,12,-12,'alternate',l,outExpo)
+				me(i+2,1,-20,20,'rotationz',l,outExpo)
+				me(i+2,1,20,-20,'rotationy',l,outExpo)
+				me(i+2,1,-12,12,'split',l,outExpo)
+				me(i+3,1,20,-20,'rotationz',l,outExpo)
+				me(i+3,1,20,-20,'rotationz',l,outExpo)
+				me(i+3,1,12,-12,'split',l,outExpo)
+			end
+			for i = 23.5,39.5,16 do
+				me(i,0.25,-10,10,'rotationz',l,outExpo)
+				me(i+0.25,0.25,10,-10,'rotationz',l,outExpo)
+			end
+			for i = 24,36,12 do
+				me(i,0.25,0,40,'*2 movey1',l,outExpo)
+				me(i+0.25,0.25,40,0,'*2 movey1',l,outExpo)
+				me(i+0.5,0.5,0,40,'*2 movey1',l,outExpo)
+			end
+			--mid-section transition, ripped directly from a project put on hiatus
+			me(28,1,0,-200,'rotationy',l,linear,1)
+			me(29,1,-200,-200,'rotationy',l,linear,1)
+			me(28+2,1,-200,0,'rotationy',l,linear,1)
+			me(29+2,1,0,0,'rotationy',l,linear,1)
+			me(28,1,0,314,'confusionyoffset',l,linear,1)
+			me(29,1,314,314,'confusionyoffset',l,linear,1)
+			me(28+2,1,314,0,'confusionyoffset',l,linear,1)
+			me(29+2,1,0,0,'confusionyoffset',l,linear,1)
+			me(28,1,0,200,'rotationy',l,linear,2)
+			me(29,1,200,200,'rotationy',l,linear,2)
+			me(28+2,1,200,0,'rotationy',l,linear,2)
+			me(29+2,1,0,0,'rotationy',l,linear,2)
+			me(28,1,0,-314,'confusionyoffset',l,linear,2)
+			me(29,1,-314,-314,'confusionyoffset',l,linear,2)
+			me(28+2,1,-314,0,'confusionyoffset',l,linear,2)
+			me(29+2,1,0,0,'confusionyoffset',l,linear,2)
+			local w = SCREEN_WIDTH / 640
+			me(28, 1, 0, 320 * w, 'x',l, linear, 1)
+			me(28, 1, 0, -320 * w, 'x',l, linear, 2)
+			me(29, 1, 320 * w, 320 * w, 'x',l, linear, 1)
+			me(29, 1, -320 * w, -320 * w, 'x',l, linear, 2)
+			me(28+2, 1, 320 * w, 0, 'x',l, linear, 1)
+			me(28+2, 1, -320 * w, 0, 'x',l, linear, 2)
+			me(29+2, 1, 0, 0, 'x',l, linear, 1)
+			me(29+2, 1, 0, 0, 'x',l, linear, 2)
+			me(28,1,0,100,'flip',l,linear)
+			me(29,1,100,100,'flip',l,linear)
+			me(30,1,100,0,'flip',l,linear)
+			me(31,1,0,0,'flip',l,linear)
+			--transition to singing
+			for i = 44,236,192 do -- for loops lasting 192 beats long???
+				me(i,0.5,20,-100,'mini',l,outExpo)
+				me(i+0.5,2.5,-100,-100,'mini',l,outExpo)
+				me(i+3,0.5,-100,0,'mini',l,outExpo)
+			end
+		local dora = { --blame a friend for calling this dora
+		{44.000,3},
+		{44.500,1},
+		{44.750,3},
+		{45.250,1},
+		{45.750,3},
+		{46.250,1},
+		{236.000,3},
+		{236.500,1},
+		{236.750,3},
+		{237.250,1},
+		{237.750,3},
+		{238.250,1},
+		}
+		for i,v in pairs(dora) do
+			if v[2] == 3 then
+			me(v[1],0.125,-30,30,'skewx',l,outExpo)
+			me(v[1],0.125,-30,30,'skewy',l,outExpo)
+			me(v[1]+0.125,0.125,30,0,'skewx',l,inExpo)
+			me(v[1]+0.125,0.125,30,0,'skewy',l,inExpo)
+			elseif v[2] == 1 then
+			me(v[1],0.125,30,-30,'skewx',l,outExpo)
+			me(v[1],0.125,30,-30,'skewx',l,outExpo)
+			me(v[1]+0.125,0.125,-30,0,'skewx',l,inExpo)
+			me(v[1]+0.125,0.125,-30,0,'skewy',l,inExpo)
+			end
+		end
+		--I didn't sleep well last night
+		me(48,1,0,-45,'rotationz',l,outCirc)
+		me(49,1,-45,-45,'rotationz',l,outCirc)
+		me(50,1,-45,45,'rotationz',l,outCirc)
+		me(51,0.5,45,45,'rotationz',l,outCirc)
+		me(51.5,0.5,45,0,'rotationz',l,outCirc)
+		me(48,0.5,0,50,'split',l,linear)
+		me(48,0.5,0,-50,'cross',l,linear)
+		me(48,0.5,0,50,'alternate',l,linear)
+		me(48.5,0.5,0,100,'split',l,linear)
+		me(49,0.5,100,0,'split',l,linear)
+		me(49,0.5,0,100,'reverse',l,linear)
+		me(49.5,0.5,100,100,'reverse',l,linear)
+		me(48+2,0.5,0,50,'split',l,linear)
+		me(48+2,0.5,0,50,'cross',l,linear)
+		me(48+2,0.5,0,50,'alternate',l,linear)
+		me(48+2,0.5,100,0,'reverse',l,linear)
+		me(48+2.5,0.5,50,0,'split',l,linear)
+		me(48.5+2,0.5,50,0,'cross',l,linear)
+		me(48.5+2,0.5,50,100,'alternate',l,linear)
+		me(49+2,0.5,100,0,'alternate',l,linear)
+		for i = 52,54,1 do
+			me(i,0.25,-40,40,'movex',l,linear)
+			me(i+0.25,0.25,40,-40,'movex',l,linear)
+			me(i+0.5,0.25,-40,40,'movex',l,linear)
+			me(i+0.75,0.25,40,-40,'movex',l,linear)
+		end
+		--The doctor told me not to think too much
+		me(52,55,0,150,'centered',e,linear) --boogie woogie
+		me(52,55,0,600*pi,'confusionoffset',e,linear) --no, Rocky. ConfusionOffset is not an instrument.
+		me(55,55.25,600*pi,0,'confusionoffset',e,linear)
+		me(55,55.5,150,0,'centered',e,linear)
+		me(55,55.5,50,0,'movex',e,linear)
+		--Tell me if you feel the same way as I do
+		for i = 56,62,2 do --does the funny bounce
+				me(i,1,-20,20,'rotationz',l,outExpo)
+				me(i,1,20,-20,'rotationy',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+		end
+		me(56.5,0.5,0,25,'flip',l,outExpo)
+		me(58, 1, 0, -320 * w, 'x',l, linear, 1)
+		me(59, 1, 640*w,320*w, 'x',l, linear, 1)
+		me(60, 2, 0,0, 'x',l, linear, 1)
+		me(58, 2, 0, -320 * w, 'x',l, linear, 2)
+		me(60, 2, 0,0, 'x',l, linear, 2)
+		me(60, 1.75, 0, 320 * w, 'x',l, linear, 1)
+		me(60, 1.75, 0, -320 * w, 'x',l, linear, 2)
+		me(61.75, 1, 320 * w, 0, 'x',l, outCirc, 1)
+		me(61.75, 1, -320 * w, 0, 'x',l, outCirc, 2)
+		me(60,1.75,0,100,'flip',l,linear,1)
+		me(60,1.75,0,100,'flip',l,linear,2)
+		me(61.75,2,100,0,'flip',l,outCirc,1)
+		me(61.75,2,100,0,'flip',l,outCirc,2)
+		me(63,1,0,0,'flip',l,linear)
+		me(60,1.75,0,-200,'rotationy',l,linear,1)
+		me(61.75,1,-200,0,'rotationy',l,outCirc,1)
+		me(60,1.75,0,314,'confusionyoffset',l,linear,1)
+		me(61.75,1,314,0,'confusionyoffset',l,outCirc,1)
+		me(60,1.75,0,200,'rotationy',l,linear,2)
+		me(61.75,1,200,0,'rotationy',l,outCirc,2)
+		me(60,1.75,0,-314,'confusionyoffset',l,linear,2)
+		me(61.75,1,-314,0,'confusionyoffset',l,outCirc,2)
+		me(63,1,0,0,'rotationy',l,linear)
+		me(63,1,0,0,'confusionyoffset',l,linear)
+		--don't care about the raindrops
+		me(63.5,0.5,0,50,'reverse',l,outExpo)
+		me(63.5,0.5,0,30,'mini',l,outExpo)
+		me(64,0.5,30,-100,'mini',l,outExpo)
+		me(64,1,0,200*pi,'confusionoffset',l,outCirc)
+		m(65,0.1,'*-1 no confusionoffset',l)
+		me(65.5,0.25,0,-50,'split',l,outExpo)
+		me(65.5,0.25,0,50,'cross',l,outExpo)
+		me(65.5,0.25,0,50,'alternate',l,outExpo)
+		me(65.75,0.25,-50,0,'split',l,outExpo)
+		me(65.75,0.25,50,100,'cross',l,outExpo)
+		me(65.75,0.25,50,0,'alternate',l,outExpo)
+		me(66.5,0.5,100,0,'cross',l,outExpo)
+		me(66.5,0.5,0,100,'reverse',l,outExpo)
+		me(67,2.75,100,100,'reverse',l,outExpo)
+		--When you stare at me, boy
+		me(67.5,0.5,0,-30,'mini',l,outExpo)
+		me(68,0.5,-30,100,'mini',l,outExpo)
+		me(69.5,0.25,0,-50,'split',l,outExpo)
+		me(65.5,0.25,0,-50,'cross',l,outExpo)
+		me(65.5,0.25,0,50,'alternate',l,outExpo)
+		me(69.75,0.25,-50,0,'split',l,outExpo)
+		me(69.75,0.25,-50,0,'cross',l,outExpo)
+		me(69.75,0.25,50,100,'alternate',l,outExpo)
+		me(69.75,0.25,100,0,'reverse',l,outExpo)
+		me(70.5,0.25,100,0,'alternate',l,outExpo)
+		me(71,0.5,0,-25,'mini',l,outExpo)
+		me(71.5,0.5,-25,50,'mini',l,outExpo)
+		me(72,0.5,50,0,'mini',l,outExpo)
+		--I feel a flush rising to my cheek
+		me(72,0.5,22.5,-45,'rotationz',l,outExpo)
+		me(72.5,1.333,-45,-45,'rotationz',l,outExpo)
+		me(73.833,1.333,-45,0,'rotationz',l,outExpo)
+		me(74,0.5,0,45,'rotationz',l,outExpo)
+		me(74.5,1.333,45,45,'rotationz',l,outExpo)
+		me(75.833,1.333,45,0,'rotationz',l,outExpo)
+		local flushed = { --insert emoji here
+		{72.500,0},
+		{72.750,1},
+		{73.000,0},
+		{73.500,2},
+		{74.500,0},
+		{74.750,1},
+		{75.000,0},
+		{75.500,2},
+		{76.000,0},
+		{76.500,3},
+		}
+		for i,v in pairs(flushed) do
+			if v[2] == 0 then
+			me(v[1],0.125,-30,30,'skewx',l,outExpo)
+			me(v[1],0.125,-30,30,'skewy',l,outExpo)
+			me(v[1]+0.125,0.125,30,0,'skewx',l,inExpo)
+			me(v[1]+0.125,0.125,30,0,'skewy',l,inExpo)
+			elseif v[2] == 1 then
+			me(v[1],0.125,30,-30,'skewx',l,outExpo)
+			me(v[1],0.125,30,-30,'skewx',l,outExpo)
+			me(v[1]+0.125,0.125,-30,0,'skewx',l,inExpo)
+			me(v[1]+0.125,0.125,-30,0,'skewy',l,inExpo)
+			elseif v[2] == 2 then
+			me(v[1],0.5,0,-18,'flip',l,outExpo)
+			me(v[1],0.5,0,6,'flip',l,outExpo)
+			me(v[1]+0.5,0.5,-18,0,'flip',l,outExpo)
+			me(v[1]+0.5,0.5,6,0,'flip',l,outExpo)
+			elseif v[2] == 3 then
+			me(v[1],1,0,200*pi,'confusionoffset',l,linear)
+			me(v[1]+1,1,0,0,'confusionoffset',l,linear)
+			me(v[1]+1.25,0.25,0,100,'flip',l,linear)
+			me(v[1]+1.5,0.75,100,100,'flip',l,linear)
+			me(v[1]+2.25,0.25,100,0,'flip',l,linear)
+			end
+		end
+		--Would you like to be my own knight
+		local holdsfunny1 = {
+		{80.000,0},
+		{81.000,1},
+		{82.000,2},
+		{83.000,1},
+		{84.000,3},
+		{85.000,4},
+		{86.000,3},
+		}
+		m(80,8,'50 drunk',l)
+		m(80,8,'50 bounce',l)
+		m(88,8,'-66 drunk',l)
+		m(88,8,'-66 bounce',l)
+		me(80,1,0,50,'flip',l,linear)
+		me(81,1,50,100,'flip',l,linear)
+		me(82,1,100,50,'flip',l,linear)
+		me(83,1,50,0,'flip',l,linear)
+		me(84,1,-15,25,'rotationz',l,linear)
+		me(85,1,25,-35,'rotationz',l,linear)
+		me(86,1.5,-35,25,'rotationz',l,linear)
+		me(87.5,0.5,25,0,'rotationz',l,linear)
+		me(88,1,0,50,'invert',l,linear)
+		me(89,1,50,100,'invert',l,linear)
+		me(90,1,100,-100,'invert',l,linear)
+		me(90,1,0,100,'flip',l,linear)
+		me(91,1,-100,75,'invert',l,linear)
+		me(91,1,100,75,'flip',l,linear)
+		m(92,1,'no flip no invert',l)
+		me(92,1,15,-30,'rotationz',l,linear)
+		me(93,1,-30,40,'rotationz',l,linear)
+		me(94,1.5,40,-25,'rotationz',l,linear)
+		me(95.5,0.5,-25,0,'rotationz',l,linear)
+		local speen = -36 --math.
+		for i = 96,98,0.5 do
+			speen = speen + 36
+			me(i,0.5,speen,speen+36,'rotationz',l,outExpo)
+			me(i,0.5,speen*-20*pi/36,(speen+36)*-20*pi/36,'confusionoffset',l,outExpo)
+		end
+		me(98.5,1.5,speen+36,speen+36,'rotationz',l,outExpo)
+		me(98.5,1.5,(speen+36)*-20*pi/36,(speen+36)*-20*pi/36,'confusionoffset',l,outExpo)
+		me(98.75,0.5,0,100,'flip',l,outExpo)
+		me(99.25,3.5,100,100,'flip',l,outExpo)
+		for i = 100,102,0.5 do
+			speen = speen + 36
+			me(i,0.5,speen,speen+36,'rotationz',l,outExpo)
+			me(i,0.5,speen*-20*pi/36,(speen+36)*-20*pi/36,'confusionoffset',l,outExpo)
+		end
+		me(102.75,0.25,100,0,'flip',l,outExpo)
+		me(102.5,0.5,0,0,'rotationz',l,outExpo)
+		me(102.5,0.5,0,0,'confusionoffset',l,outExpo)
+		me(104,4,0,160*w,'x',l,linear,1)
+		me(104,4,0,-160*w,'x',l,linear,2)
+		me(104,3,0,-100,'mini',l,linear)
+		me(107,1,-100,-50,'mini',l,linear)
+		me(108,3,160*w,160*w,'x',l,linear,1)
+		me(108,3,-160*w,-160*w,'x',l,linear,2)
+		me(108,3,-50,-50,'mini',l,linear)
+		me(111,1,160*w,0,'x',l,linear,1)
+		me(111,1,-160*w,0,'x',l,linear,2)
+		me(111,1,-50,0,'mini',l,linear)
+		local speeen = -60 --yes, with 3 Es
+		for i = 108,110,1/3 do
+			speeen = speeen + 60
+			me(i,1/3,speeen,speeen+60,'rotationz',l,outExpo)
+			me(i,1/3,speeen*-200*pi/360,(speeen+60)*-200*pi/360,'confusionoffset',l,outExpo)
+		end
+		me(110.5,0.5,15,0,'rotationz',l,outExpo)
+		me(110.5,0.5,15,0,'confusionoffset',l,outExpo)
+		--moon shines in the cranberry city
+		for i = 112,136,4 do --does the funny bounce
+				me(i,1,-20,20,'rotationz',l,outExpo)
+				me(i,1,20,-20,'rotationy',l,outExpo)
+				me(i,1,-12,12,'alternate',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+				me(i+1,1,12,-12,'alternate',l,outExpo)
+				me(i+2,1,-20,20,'rotationz',l,outExpo)
+				me(i+2,1,20,-20,'rotationy',l,outExpo)
+				me(i+2,1,-12,12,'split',l,outExpo)
+				me(i+3,1,20,-20,'rotationz',l,outExpo)
+				me(i+3,1,20,-20,'rotationz',l,outExpo)
+				me(i+3,1,12,-12,'split',l,outExpo)
+		end
+		for i = 112,128,16 do
+			me(i+0.0,0.5,0,18,'split',l,outExpo)
+			me(i+0.0,0.5,0,-6,'reverse',l,outExpo)
+			me(i+0.5,0.5,18,-18,'split',l,outExpo)
+			me(i+0.5,0.5,-6,6,'reverse',l,outExpo)
+			me(i+1.0,0.5,-18,18,'split',l,outExpo)
+			me(i+1.0,0.5,6,-6,'reverse',l,outExpo)
+			me(i+1.5,0.5,18,-18,'split',l,outExpo)
+			me(i+1.5,0.5,-6,6,'reverse',l,outExpo)
+			me(i+1.833,0.5,0,25,'flip',l,outExpo)
+			me(i+1.833,0.5,0,-75,'invert',l,outExpo)
+			me(i+2.333,0.5,25,100,'flip',l,outExpo)
+			me(i+2.333,0.5,-75,0,'invert',l,outExpo)
+			me(i+2.833,0.5,100,0,'flip',l,outExpo)
+			me(i+2.833,0.5,0,100,'invert',l,outExpo)
+		end
+		me(115.333,0.5,100,0,'invert',l,outExpo)
+		me(116+0.0,0.5,0,-18,'split',l,outExpo)
+		me(116+0.0,0.5,0,9,'reverse',l,outExpo)
+		me(116+0.5,0.5,-18,18,'split',l,outExpo)
+		me(116+0.5,0.5,9,-9,'reverse',l,outExpo)
+		me(116+1.0,0.5,18,-18,'split',l,outExpo)
+		me(116+1.0,0.5,-9,9,'reverse',l,outExpo)
+		me(116+1.5,0.5,-18,18,'split',l,outExpo)
+		me(116+1.5,0.5,9,-9,'reverse',l,outExpo)
+		me(116+1.833,0.5,0,25,'flip',l,outExpo)
+		me(116+1.833,0.5,0,-75,'invert',l,outExpo)
+		me(116+2.333,0.5,25,100,'flip',l,outExpo)
+		me(116+2.333,0.5,-75,0,'invert',l,outExpo)
+		me(116+2.833,0.5,100,0,'flip',l,outExpo)
+		me(119.5,0.5,0,100,'reverse',l,linear)
+		me(120,3.5,100,100,'reverse',l,linear)
+		me(123.5,0.5,100,0,'reverse',l,linear)
+		me(120+0.0,0.5,0,18,'split',l,outExpo)
+		me(120+0.0,0.5,100,94,'reverse',l,outExpo)
+		me(120+0.5,0.5,18,-18,'split',l,outExpo)
+		me(120+0.5,0.5,91,109,'reverse',l,outExpo)
+		me(120+1.0,0.5,-18,18,'split',l,outExpo)
+		me(120+1.0,0.5,109,91,'reverse',l,outExpo)
+		me(120+1.5,0.5,18,-18,'split',l,outExpo)
+		me(120+1.5,0.5,91,109,'reverse',l,outExpo)
+		me(120+1.833,0.5,0,25,'flip',l,outExpo)
+		me(120+1.833,0.5,0,-75,'invert',l,outExpo)
+		me(120+2.333,0.5,25,100,'flip',l,outExpo)
+		me(120+2.333,0.5,-75,0,'invert',l,outExpo)
+		me(120+2.833,0.5,100,0,'flip',l,outExpo)
+		me(120+2.833,0.5,0,100,'invert',l,outExpo)
+		me(123.5,0.5,100,0,'invert',l,outExpo)
+		for i = 124,156,32 do
+			me(i,1,0,-200,'rotationy',l,linear,1)
+			me(i+1,1,-200,-200,'rotationy',l,linear,1)
+			me(i+2,1,-200,0,'rotationy',l,linear,1)
+			me(i+3,1,0,0,'rotationy',l,linear,1)
+			me(i,1,0,314,'confusionyoffset',l,linear,1)
+			me(i+1,1,314,314,'confusionyoffset',l,linear,1)
+			me(i+2,1,314,0,'confusionyoffset',l,linear,1)
+			me(i+3,1,0,0,'confusionyoffset',l,linear,1)
+			me(i,1,0,200,'rotationy',l,linear,2)
+			me(i+1,1,200,200,'rotationy',l,linear,2)
+			me(i+2,1,200,0,'rotationy',l,linear,2)
+			me(i+3,1,0,0,'rotationy',l,linear,2)
+			me(i,1,0,-314,'confusionyoffset',l,linear,2)
+			me(i+1,1,-314,-314,'confusionyoffset',l,linear,2)
+			me(i+2,1,-314,0,'confusionyoffset',l,linear,2)
+			me(i+3,1,0,0,'confusionyoffset',l,linear,2)
+			me(i, 1, 0, 320 * w, 'x',l, linear, 1)
+			me(i, 1, 0, -320 * w, 'x',l, linear, 2)
+			me(i+1, 1, 320 * w, 320 * w, 'x',l, linear, 1)
+			me(i+1, 1, -320 * w, -320 * w, 'x',l, linear, 2)
+			me(i+2, 1, 320 * w, 0, 'x',l, linear, 1)
+			me(i+2, 1, -320 * w, 0, 'x',l, linear, 2)
+			me(i+3, 1, 0, 0, 'x',l, linear, 1)
+			me(i+3, 1, 0, 0, 'x',l, linear, 2)
+			me(i,1,0,100,'flip',l,linear)
+			me(i+1,1,100,100,'flip',l,linear)
+			me(i+2,1,100,0,'flip',l,linear)
+			me(i+3,1,0,0,'flip',l,linear)
+			me(i,0.5,0,-100,'tiny',l,inSine,1)
+			me(i+0.5,0.5,-100,0,'tiny',l,outSine,1)
+			me(i+2,0.5,0,100,'tiny',l,inSine,1)
+			me(i+2.5,0.5,100,0,'tiny',l,outSine,1)
+			me(i,0.5,0,100,'tiny',l,inSine,2)
+			me(i+0.5,0.5,100,0,'tiny',l,outSine,2)
+			me(i+1.5,0.5,0,100,'reverse',l,linear)
+			me(i+2,2,100,100,'reverse',l,linear)
+			me(i+2,0.5,0,-100,'tiny',l,inSine,2)
+			me(i+2.5,0.5,-100,0,'tiny',l,outSine,2)
+			me(i+4,0.5,100,0,'reverse',l,linear)
+		end
+		me(131.5,0.5,100,0,'invert',l,outExpo)
+		me(132.5,0.5,0,100,'reverse',l,inSine)
+		me(133,2.5,100,100,'reverse',l,linear)
+		me(135.5,0.5,100,0,'reverse',l,linear)
+		for i = 131.5, 132, 0.5 do
+			me(i,0.25,0,-9,'split',l,outExpo)
+			me(i,0.25,0,-9,'cross',l,outExpo)
+			me(i,0.25,0,9,'alternate',l,outExpo)
+			me(i,0.25,0,-9,'reverse',l,outExpo)
+			me(i+0.25,0.25,-9,-0,'split',l,linear)
+			me(i+0.25,0.25,-9,0,'cross',l,linear)
+			me(i+0.25,0.25,9,0,'alternate',l,linear)
+			me(i+0.25,0.25,-9,0,'reverse',l,linear)
+		end
+		me(134.5,0.5,0,100,'invert',l,outExpo)
+		me(135,0.5,0,100,'flip',l,outExpo)
+		me(135,0.5,100,0,'invert',l,outExpo)
+		me(135.5,0.5,100,25,'flip',l,outExpo)
+		me(135.5,0.5,0,-75,'invert',l,outExpo)
+		me(136,0.5,25,0,'flip',l,outExpo)
+		me(136,0.5,-75,0,'invert',l,outExpo)
+		local chorusdora = { --ditto
+			{132.000,3},
+			{132.500,1},
+			{133.000,3},
+			{133.500,1},
+			{133.750,3},
+			{164.000,2},
+			{164.500,4},
+			{165.000,2},
+			{165.500,4},
+			{165.750,2},
+		}
+		for i,v in pairs(chorusdora) do
+			if v[2] == 3 then
+			me(v[1],0.125,-30,30,'skewy',l,outExpo)
+			me(v[1]+0.125,0.125,30,0,'skewy',l,inExpo)
+			elseif v[2] == 1 then
+			me(v[1]+0.125,0.125,30,-30,'skewy',l,inExpo)
+			me(v[1]+0.125,0.125,-30,0,'skewy',l,inExpo)
+			elseif v[2] == 2 then
+			me(v[1],0.125,-50,50,'skewy',l,outExpo)
+			me(v[1]+0.125,0.125,50,0,'skewy',l,inExpo)
+			elseif v[2] == 4 then
+			me(v[1]+0.125,0.125,50,-50,'skewy',l,inExpo)
+			me(v[1]+0.125,0.125,-50,0,'skewy',l,inExpo)
+			end
+		end
+		me(136.5,0.5,0,80*w,'x',l,outExpo,1)
+		me(137,0.5,80*w,160*w,'x',l,outExpo,1)
+		me(137.5,1.5,160*w,160*w,'x',l,outExpo,1)
+		me(137.5,0.5,0,-80*w,'x',l,outExpo,2)
+		me(138,0.5,-80*w,-160*w,'x',l,outExpo,2)
+		me(138.5,1,-160*w,-160*w,'x',l,outExpo,2)
+		for i = 138.5,170.5,32 do
+			me(i,0.5,0,-100,'mini',l,outExpo)
+			me(i+0.5,0.5,-100,0,'mini',l,outExpo)
+		end
+		me(139,0.5,160*w,0,'x',l,outExpo,1)
+		me(139.5,0.5,-160*w,0,'x',l,outExpo,2)
+		me(140,0.25,0,-150,'tiny',l,outExpo)
+		me(140.25,0.24,-150,-150,'tiny',l,outExpo)
+		me(140.49,0.01,0,0,'tiny',l,outExpo)
+		me(140.5,0.5,-150,0,'tiny0',l,outExpo)
+		me(140.5,0.5,-150,0,'tiny1',l,outExpo)
+		me(140.5,0.25,-150,-150,'tiny2',l,outExpo)
+		me(140.5,0.25,-150,-150,'tiny3',l,outExpo)
+		me(140.75,0.25,-150,0,'tiny2',l,outExpo)
+		me(140.75,0.25,-150,0,'tiny3',l,outExpo)
+		me(141.5,0.5,25,0,'tiny',l,outExpo)
+		me(142,0.25,100,133,'zoomx',l,outExpo)
+		me(142,0.25,100,50,'zoomy',l,outExpo)
+		me(142.25,0.25,133,100,'zoomx',l,linear)
+		me(142.25,0.25,50,100,'zoomy',l,linear)
+		for i = 144,148,4 do
+			me(i,0.25,0,-100,'mini',l,outExpo)
+			me(i+0.25,0.25,-100,0,'mini',l,linear)
+			me(i+0.5,0.5,0,50,'reverse',l,outExpo)
+			me(i+1,0.5,50,100,'reverse',l,outExpo)
+			me(i+1.5,1,100,100,'reverse',l,outExpo)
+			me(i+2,0.25,0,-100,'mini',l,outExpo)
+			me(i+2.25,0.25,-100,0,'mini',l,linear)
+			me(i+2.5,0.5,100,50,'reverse',l,outExpo)
+			me(i+3,0.5,50,0,'reverse',l,outExpo)
+		end
+		--meme section
+		me(151.5,0.5,0,100,'tiny',l,outExpo)
+		me(151.5,0.5,0,160*w,'x',l,outExpo,1)
+		me(151.5,0.5,0,-160*w,'x',l,outExpo,2)
+		me(152,1,160*w,160*w,'x',l,outExpo,1)
+		me(152,1,-160*w,-160*w,'x',l,outExpo,2)
+		me(152,0.5,100,150,'zoomx',l,outExpo,1)
+		me(152,0.5,100,150,'zoomy',l,outExpo,1)
+		me(152.5,0.5,150,100,'zoomx',l,inExpo,1)
+		me(152.5,0.5,150,100,'zoomy',l,inExpo,1)
+		me(152,0.5,100,-200,'tiny',l,outExpo,1)
+		me(152.5,0.5,-200,0,'tiny',l,inExpo,1)
+		me(152,0.5,100,0,'tiny',l,outExpo,2)
+		me(152,1,100,100,'stealth',l,outExpo,1)
+		me(152,1,100,100,'dark',l,outExpo,2)
+		me(152,1,0,400,'*2.25 centered2',l,linear)
+		me(152,1,0,200*pi,'confusionoffset',l,outCirc)
+		me(153,0.5,0,0,'confusionoffset',l,linear)
+		me(153,0.5,0,0,'dark',l,linear)
+		me(153,0.5,0,0,'stealth',l,linear)
+		me(153,1,160*w,-20,'x',l,inOutBack,1)
+		me(153,1,-160*w,-20,'x',l,inOutBack,2)
+		me(153,1,400,-20,'centered2',l,inOutBack)
+		--end meme section
+		--I was too lazy to for loop this next section
+		me(152+1,1,20,-20,'rotationz',l,outExpo)
+		me(152+1,1,20,-20,'rotationz',l,outExpo)
+		me(152+1,1,12,-12,'alternate',l,outExpo)
+		me(152+2,1,-20,20,'rotationz',l,outExpo)
+		me(152+2,1,20,-20,'rotationy',l,outExpo)
+		me(152+2,1,-12,12,'split',l,outExpo)
+		me(152+3,1,20,-20,'rotationz',l,outExpo)
+		me(152+3,1,20,-20,'rotationz',l,outExpo)
+		me(152+3,1,12,-12,'split',l,outExpo)
+		me(159,1,100,0,'reverse',l,linear)
+		me(160+0.0,0.5,0,18,'split',l,outExpo)
+		me(160+0.0,0.5,0,-6,'reverse',l,outExpo)
+		me(160+0.5,0.5,18,-18,'split',l,outExpo)
+		me(160+0.5,0.5,-6,6,'reverse',l,outExpo)
+		me(160+1.0,0.5,-18,18,'split',l,outExpo)
+		me(160+1.0,0.5,6,-6,'reverse',l,outExpo)
+		me(160+1.5,0.5,18,-18,'split',l,outExpo)
+		me(160+1.5,0.5,-6,6,'reverse',l,outExpo)
+		me(160+1.833,0.5,0,25,'flip',l,outExpo)
+		me(160+1.833,0.5,0,-75,'invert',l,outExpo)
+		me(160+2.333,0.5,25,100,'flip',l,outExpo)
+		me(160+2.333,0.5,-75,0,'invert',l,outExpo)
+		me(160+2.833,0.5,100,0,'flip',l,outExpo)
+		me(160+2.833,0.5,0,100,'invert',l,outExpo)
+		me(131.5+32,0.5,100,0,'invert',l,outExpo)
+		me(164,0.5,20,-100,'mini',l,outExpo)
+		me(164+0.5,1.5,-100,-100,'mini',l,outExpo)
+		me(164+2,0.5,-100,0,'mini',l,outExpo)
+		me(166.5,0.5,0,100,'invert',l,outExpo)
+		me(167,0.5,0,100,'flip',l,outExpo)
+		me(167,0.5,100,0,'invert',l,outExpo)
+		me(167.5,0.5,100,25,'flip',l,outExpo)
+		me(167.5,0.5,0,-75,'invert',l,outExpo)
+		me(168,0.5,25,0,'flip',l,outExpo)
+		me(168,0.5,-75,0,'invert',l,outExpo)
+		me(168.5,0.5,0,80*w,'x',l,outExpo,1)
+		me(137+32,0.5,80*w,160*w,'x',l,outExpo,1)
+		me(137+32.5,1.5,160*w,160*w,'x',l,outExpo,1)
+		me(137+32.5,0.5,0,-80*w,'x',l,outExpo,2)
+		me(138+32,0.5,-80*w,-160*w,'x',l,outExpo,2)
+		me(138.5+32,1,-160*w,-160*w,'x',l,outExpo,2)
+		me(139+32,0.5,160*w,0,'x',l,outExpo,1)
+		me(139.5+32,0.5,-160*w,0,'x',l,outExpo,2)
+		me(140+32,0.25,0,-150,'tiny',l,outExpo)
+		me(140.25+32,0.24,-150,-150,'tiny',l,outExpo)
+		me(140.49+32,0.01,0,0,'tiny',l,outExpo)
+		me(140.5+32,0.5,-150,0,'tiny0',l,outExpo)
+		me(140.5+32,0.5,-150,0,'tiny1',l,outExpo)
+		me(140.5+32,0.25,-150,-150,'tiny2',l,outExpo)
+		me(140.5+32,0.25,-150,-150,'tiny3',l,outExpo)
+		me(140.75+32,0.25,-150,0,'tiny2',l,outExpo)
+		me(140.75+32,0.25,-150,0,'tiny3',l,outExpo)
+		me(141.5+32,0.5,25,0,'tiny',l,outExpo)
+		me(142+32,0.25,100,150,'zoomx',l,outExpo)
+		me(142+32,0.25,100,50,'zoomy',l,outExpo)
+		me(142.25+32,0.25,150,100,'zoomx',l,linear)
+		me(142.25+32,0.25,50,100,'zoomy',l,linear)
+		--I crashed my car into the brij...
+		me(175,0.5,0,50,'flip',l,linear)
+		me(175,204,50,50,'flip',e,linear)
+		me(175,0.5,0,160*w,'x',l,linear,1)
+		me(175,0.5,0,-160*w,'x',l,linear,2)
+		me(175.5,204,160*w,160*w,'x',e,linear,1)
+		me(175.5,204,-160*w,-160*w,'x',e,linear,2)
+		me(175.5,0.5,0,-100,'tornado',l,inCirc)
+		me(176,204,-100,-100,'tornado',e,inCirc)
+		m(176,204,'-24 dizzy',e)
+		local holdsfunny2 = {
+		{183.000,0},
+		{183.250,1},
+		{183.500,0},
+		{183.750,1},
+		{184.000,0},
+		{191.000,2},
+		{191.250,3},
+		{191.500,2},
+		{191.750,3},
+		{192.000,2},
+		}
+		for i,v in pairs(holdsfunny2) do
+			if v[2] == 0 then
+			me(v[1],0.125,-30,30,'skewx',l,outExpo)
+			me(v[1]+0.125,0.125,30,0,'skewx',l,inExpo)
+			elseif v[2] == 1 then
+			me(v[1]+0.125,0.125,30,-30,'skewx',l,outExpo)
+			me(v[1]+0.125,0.125,-30,0,'skewx',l,inExpo)
+			elseif v[2] == 2 then
+			me(v[1],0.125,-50,50,'skewx',l,outExpo)
+			me(v[1]+0.125,0.125,50,0,'skewx',l,inExpo)
+			elseif v[2] == 3 then
+			me(v[1]+0.125,0.125,50,-50,'skewx',l,outExpo)
+			me(v[1]+0.125,0.125,-50,0,'skewx',l,inExpo)
+			end
+		end
+		m(192,204,'200 beat',e)
+		for i = 196,196.5,0.5 do
+			me(i,0.25,0,8,'reverse',l,outExpo)
+			me(i+0.25,0.25,8,0,'reverse',l,inExpo)
+		end
+		--There's no shelter from love
+		me(208+0.0,0.5,0,-18,'split',l,outExpo)
+		me(208+0.0,0.5,0,9,'reverse',l,outExpo)
+		me(208+0.5,0.5,-18,18,'split',l,outExpo)
+		me(208+0.5,0.5,9,-9,'reverse',l,outExpo)
+		me(208+1.0,0.5,18,-18,'split',l,outExpo)
+		me(208+1.0,0.5,-9,9,'reverse',l,outExpo)
+		me(208+1.5,0.5,-18,18,'split',l,outExpo)
+		me(208+1.5,0.5,9,-9,'reverse',l,outExpo)
+		me(208+1.833,0.5,0,25,'flip',l,outExpo)
+		me(208+1.833,0.5,0,-75,'invert',l,outExpo)
+		me(208+2.333,0.5,25,100,'flip',l,outExpo)
+		me(208+2.333,0.5,-75,0,'invert',l,outExpo)
+		me(208+2.833,0.5,100,0,'flip',l,outExpo)
+		me(211.5,0.5,0,100,'reverse',l,linear)
+		me(215.5,0.5,100,0,'reverse',l,linear)
+		me(212+0.0,0.5,0,18,'split',l,outExpo)
+		me(212+0.0,0.5,100,94,'reverse',l,outExpo)
+		me(212+0.5,0.5,18,-18,'split',l,outExpo)
+		me(212+0.5,0.5,91,109,'reverse',l,outExpo)
+		me(212+1.0,0.5,-18,18,'split',l,outExpo)
+		me(212+1.0,0.5,109,91,'reverse',l,outExpo)
+		me(212+1.5,0.5,18,-18,'split',l,outExpo)
+		me(212+1.5,0.5,91,109,'reverse',l,outExpo)
+		me(212+1.833,0.5,0,25,'flip',l,outExpo)
+		me(212+1.833,0.5,0,-75,'invert',l,outExpo)
+		me(212+2.333,0.5,25,100,'flip',l,outExpo)
+		me(212+2.333,0.5,-75,0,'invert',l,outExpo)
+		me(212+2.833,0.5,100,0,'flip',l,outExpo)
+		me(212+2.833,0.5,0,100,'invert',l,outExpo)
+		me(215.5,0.5,100,0,'invert',l,outExpo)
+		for i = 208,232,4 do --WE GET IT, IT DOES THE FUNNY BOUNCE, JESUS POLE-DANCING CHRIST
+				me(i,1,-20,20,'rotationz',l,outExpo)
+				me(i,1,20,-20,'rotationy',l,outExpo)
+				me(i,1,-12,12,'alternate',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+				me(i+1,1,20,-20,'rotationz',l,outExpo)
+				me(i+1,1,12,-12,'alternate',l,outExpo)
+				me(i+2,1,-20,20,'rotationz',l,outExpo)
+				me(i+2,1,20,-20,'rotationy',l,outExpo)
+				me(i+2,1,-12,12,'split',l,outExpo)
+				me(i+3,1,20,-20,'rotationz',l,outExpo)
+				me(i+3,1,20,-20,'rotationz',l,outExpo)
+				me(i+3,1,12,-12,'split',l,outExpo)
+		end
+		--We both have seemed to blur every line and take another step back
+		me(214,1.5,109,100,'reverse',l,outExpo)
+		me(215.5,4,100,100,'reverse',l,outExpo,2)
+		local blureveryline = { --it was originally twice as fast... I could bring that back in a slumpage
+		{216.333,0,1},
+		{217.833,1,1},
+		}
+		local blursed = {
+		{216.333,0,1},
+		{217.000,1,1},
+		{217.833,0,1},
+		{218.500,1,1},
+		}
+		if slumpo then
+			for i,v in pairs(blursed) do
+				if v[2] == 0 then
+					me(v[1],0.667,0,320*w,'x',l,inSine,1)
+					me(v[1],0.667,0,-320*w,'x',l,inSine,2)
+				elseif v[2] == 1 then
+					me(v[1],0.667,320*w,0,'x',l,inSine,1)
+					me(v[1],0.667,-320*w,0,'x',l,inSine,2)
+				end
+			end
+		else
+			for i,v in pairs(blureveryline) do
+				if v[2] == 0 then
+					me(v[1],1.5,0,320*w,'x',l,outCirc,1)
+					me(v[1],1.5,0,-320*w,'x',l,outCirc,2)
+				elseif v[2] == 1 then
+					me(v[1],1.5,320*w,0,'x',l,outCirc,1)
+					me(v[1],1.5,-320*w,0,'x',l,outCirc,2)
+				end
+			end
+		end
+		me(219.5,0.5,100,0,'reverse',l,outExpo,2)
+		me(219.5,0.5,0,100,'reverse',l,outExpo,1)
+		me(220,0.5,10,-150,'mini',l,outExpo)
+		me(220.5,0.5,-150,0,'mini',l,outExpo)
+		me(220.5,0.5,100,100,'reverse',l,outExpo,1)
+		me(221,0.5,100,0,'reverse',l,outExpo,1)
+		me(221.833,0.5,0,40,'mini',l,outExpo)
+		me(222.333,0.5,40,120,'mini',l,outExpo)
+		me(222.833,0.5,120,0,'mini',l,outExpo)
+		me(223.5,0.25,-50,50,'skewx',l,inSine)
+		me(223.75,0.25,50,-50,'skewx',l,inSine)
+		me(224,0.25,0,30,'skewx',l,outExpo)
+		me(224+0.0,0.5,0,-18,'split',l,outExpo)
+		me(224+0.0,0.5,0,9,'reverse',l,outExpo)
+		me(224+0.5,0.5,-18,18,'split',l,outExpo)
+		me(224+0.5,0.5,9,-9,'reverse',l,outExpo)
+		me(224+1.0,0.5,18,-18,'split',l,outExpo)
+		me(224+1.0,0.5,-9,9,'reverse',l,outExpo)
+		me(224+1.5,0.5,-18,18,'split',l,outExpo)
+		me(224+1.5,0.5,9,-9,'reverse',l,outExpo)
+		me(224+1.833,0.5,0,25,'flip',l,outExpo)
+		me(224+1.833,0.5,0,-75,'invert',l,outExpo)
+		me(224+2.333,0.5,25,100,'flip',l,outExpo)
+		me(224+2.333,0.5,-75,0,'invert',l,outExpo)
+		me(224+2.833,0.5,100,0,'flip',l,outExpo)
+		--merry go round, fuck the merry go round, all my homies hate the merry go round
+		me(228,3,0,360,'rotationz',l,linear)
+		me(231,1,0,0,'rotationz',l,linear)
+		me(228,3,0,100*pi,'confusionoffset',l,linear)
+		me(231,1,0,0,'confusionoffset',l,linear)
+		local speeeen = -72 --YES, WITH FOUR E'S. COUNT THEM.
+		for i = 228,230,0.5 do
+			speeeen = speeeen + 72
+			me(i,0.5,speeeen,speeeen+72,'rotationz',l,outExpo)
+			me(i,0.5,speeeen*-200*pi/360,(speeeen+72)*-200*pi/360,'confusionoffset',l,outExpo)
+		end
+		me(230.5,0.5,0,0,'confusionoffset',l,linear)
+		me(230.5,0.5,0,0,'rotationz',l,linear)
+		--I tried, fuck this shit
+		--me(228,2,0,400,'rotationy',l,linear,1)
+		--me(228,2,0,400,'rotationy',l,linear,2)
+		--me(228,2,0,-628,'confusionyoffset',l,linear,1)
+		--me(228,2,0,628,'confusionyoffset',l,linear,2)
+		--me(228+4,0.5,0,0,'rotationy',l,linear)
+		--me(228+4,0.5,0,0,'confusionyoffset',l,linear)
+		--me(228+2,2,-200,0,'rotationy',l,linear,1)
+		--me(228+2,2,200,0,'rotationy',l,linear,2)
+		--me(228+2,2,-628,0,'confusionyoffset',l,linear,1)
+		--me(228+2,2,628,0,'confusionyoffset',l,linear,2)
+		--me(228, 2, 0, 320 * w, 'x',l, linear, 1)
+		--me(228, 2, 0, -320 * w, 'x',l, linear, 2)
+		--me(228+2, 2, 320 * w, 0, 'x',l, linear, 1)
+		--me(228+2, 2, -320 * w, 0, 'x',l, linear, 2)
+		--me(228,2,0,100,'flip',l,linear)
+		--me(228+2,2,100,0,'flip',l,linear)
+		
+		me(233.5,2.5,0,400*pi,'confusionoffset',l,linear)
+		me(236,1.5,0,0,'confusionoffset',l,linear)
+		
+		--outro
+		for i = 240,264,4 do --one more time, kiddos
+				me(i,1,-15,15,'rotationz',l,outExpo)
+				me(i,1,15,-15,'rotationy',l,outExpo)
+				me(i,1,-9,9,'alternate',l,outExpo)
+				me(i+1,1,15,-15,'rotationz',l,outExpo)
+				me(i+1,1,15,-15,'rotationz',l,outExpo)
+				me(i+1,1,9,-9,'alternate',l,outExpo)
+				me(i+2,1,-15,15,'rotationz',l,outExpo)
+				me(i+2,1,15,-15,'rotationy',l,outExpo)
+				me(i+2,1,-9,9,'split',l,outExpo)
+				me(i+3,1,15,-15,'rotationz',l,outExpo)
+				me(i+3,1,15,-15,'rotationz',l,outExpo)
+				me(i+3,1,9,-9,'split',l,outExpo)
+		end
+		me(239.5,1.5,0,100,'tornado',l,inCirc)
+		me(241,1,100,100,'tornado',l,inCirc)
+		me(242,1,100,0,'tornado',l,inCirc)
+		me(244,0.5,0,50,'reverse',l,outExpo)
+		me(244.5,0.5,50,100,'reverse',l,outExpo)
+		me(245,2,100,0,'reverse',l,outSine)
+		me(245,0.5,0,-100,'mini',l,outExpo)
+		me(245.5,0.5,-100,0,'mini',l,linear)
+		me(247,0.25,-34,34,'skewx',l,outCirc)
+		me(247.25,0.25,34,-34,'skewx',l,outCirc)
+		me(247.5,0.25,-34,0,'skewx',l,linear)
+		me(247.75,0.25,34,-34,'skewx',l,outCirc)
+		me(248,0.25,-34,34,'skewx',l,outCirc)
+		
+		me(248,1,0,-200,'rotationy',l,linear,1)
+		me(248+1,3,-200,-200,'rotationy',l,linear,1)
+		me(248+4,1,-200,0,'rotationy',l,linear,1)
+		me(248+5,1,0,0,'rotationy',l,linear,1)
+		me(248,1,0,314,'confusionyoffset',l,linear,1)
+		me(248+1,3,314,314,'confusionyoffset',l,linear,1)
+		me(248+4,1,314,0,'confusionyoffset',l,linear,1)
+		me(248+5,1,0,0,'confusionyoffset',l,linear,1)
+		me(248,1,0,200,'rotationy',l,linear,2)
+		me(248+1,3,200,200,'rotationy',l,linear,2)
+		me(248+4,1,200,0,'rotationy',l,linear,2)
+		me(248+5,1,0,0,'rotationy',l,linear,2)
+		me(248,1,0,-314,'confusionyoffset',l,linear,2)
+		me(248+1,3,-314,-314,'confusionyoffset',l,linear,2)
+		me(248+4,1,-314,0,'confusionyoffset',l,linear,2)
+		me(248+5,1,0,0,'confusionyoffset',l,linear,2)
+		me(248, 1, 0, 320 * w, 'x',l, linear, 1)
+		me(248, 1, 0, -320 * w, 'x',l, linear, 2)
+		me(248+1, 3, 320 * w, 320 * w, 'x',l, linear, 1)
+		me(248+1, 3, -320 * w, -320 * w, 'x',l, linear, 2)
+		me(248+4, 1, 320 * w, 0, 'x',l, linear, 1)
+		me(248+4, 1, -320 * w, 0, 'x',l, linear, 2)
+		me(248+5, 1, 0, 0, 'x',l, linear, 1)
+		me(248+5, 1, 0, 0, 'x',l, linear, 2)
+		me(248,1,0,100,'flip',l,linear)
+		me(248+1,3,100,100,'flip',l,linear)
+		me(248+4,1,100,0,'flip',l,linear)
+		me(248+5,1,0,0,'flip',l,linear)
+		me(254,0.5,0,100,'alternate',l,outQuart)
+		me(254.5,0.5,100,100,'alternate',l,outQuart)
+		me(255,0.5,100,0,'alternate',l,outQuart)
+		me(255,0.5,0,100,'reverse',l,outQuart)
+		me(255.5,0.5,100,0,'reverse',l,inSine)
+		
+		--THE FINAL STRETCH
+		m(257,3,'*2.25 600 centered2',l)
+		m(258.5,0.5,'*-1 0 centered2',l)
+		m(260,0.5,'*-1 0 centered2',l)
+		local outrodora = { --not gonna lie, I am so done with this modfile
+			{260.000,1},
+			{260.500,3},
+			{261.000,1},
+			{261.500,3},
+			{261.750,1},
+		}
+		for i,v in pairs(outrodora) do
+			if v[2] == 3 then
+			me(v[1],0.125,-40,40,'skewx',l,outExpo)
+			me(v[1]+0.125,0.125,40,0,'skewx',l,inExpo)
+			elseif v[2] == 1 then
+			me(v[1]+0.125,0.125,40,-40,'skewx',l,inExpo)
+			me(v[1]+0.125,0.125,-40,0,'skewx',l,inExpo)
+			end
+		end
+		me(262.5,0.25,0,30,'rotationz',l,outExpo)
+		me(262.75,0.25,30,-30,'rotationz',l,outExpo)
+		me(263,0.25,-30,0,'rotationz',l,outExpo)
+		me(263.5,0.25,0,-40,'*2 movey2',l,outExpo)
+		me(263.75,0.25,-40,0,'*2 movey2',l,outExpo)
+		me(264,0.5,0,-40,'*2 movey2',l,outExpo)
+		m(257+8,3,'*2.25 600 centered2',l)
+		m(258.5+8,0.5,'*-1 0 centered2',l)
+		m(260+8,0.5,'*-1 0 centered2',l)
+		local theend = { --I DID IT
+		{268.000,0},
+		{268.500,1},
+		{269.000,0},
+		{269.250,1},
+		{269.750,2},
+		{270.250,1},
+		{270.750,0},
+		{271.000,2},
+		}
+		for i,v in pairs(theend) do --the intro but with better code
+			if v[2] == 0 then
+			me(v[1],0.25,0,100,'arrowpath0',l,outExpo)
+			me(v[1]+0.25,0.25,100,0,'arrowpath0',l,outExpo)
+			me(v[1],0.25,0,-100,'tiny0',l,outExpo)
+			me(v[1]+0.25,0.25,-100,0,'tiny0',l,outExpo)
+			elseif v[2] == 1 then
+			me(v[1],0.25,0,100,'arrowpath1',l,outExpo)
+			me(v[1]+0.25,0.25,100,0,'arrowpath1',l,outExpo)
+			me(v[1],0.25,0,-100,'tiny1',l,outExpo)
+			me(v[1]+0.25,0.25,-100,0,'tiny1',l,outExpo)
+			elseif v[2] == 2 then
+			me(v[1],0.25,0,100,'arrowpath2',l,outExpo)
+			me(v[1]+0.25,0.25,100,0,'arrowpath2',l,outExpo)
+			me(v[1],0.25,0,-100,'tiny2',l,outExpo)
+			me(v[1]+0.25,0.25,-100,0,'tiny2',l,outExpo)
+			end
+		end
+		--this ending was harder to code than expected
+		me(268,2.5,0,160*w,'x',l,inCirc,1)
+		me(268,2.5,0,-160*w,'x',l,inCirc,2)
+		me(270.5,284,160*w,160*w,'x',e,outExpo,1)
+		me(270.5,284,-160*w,-160*w,'x',e,outExpo,2)
+		me(270.5,0.5,100,150,'zoomx',l,outExpo,1)
+		me(270.5,0.5,100,150,'zoomy',l,outExpo,1)
+		me(271,0.5,150,50,'zoomx',l,inExpo,1)
+		me(271,0.5,150,50,'zoomy',l,inExpo,1)
+		me(270,1,100,-200,'tiny',l,outExpo,1)
+		me(271,0.5,-200,50,'tiny',l,inExpo,1)
+		me(270.5,1.5,100,100,'stealth',l,outExpo,1)
+		me(270.5,1.5,100,100,'dark',l,outExpo,2)
+		me(271,0.5,0,500,'*4.5 centered2',l,linear)
+		me(271,0.5,0,200*pi,'confusionoffset',l,outCirc)
+		me(271.5,3,0,600*pi,'confusionoffset',l,linear)
+		me(271.5,0.5,0,0,'dark',l,linear)
+		me(271.5,0.5,0,0,'stealth',l,linear)
+		me(271.5,4,0,10,'invert',l,outQuint)
+		me(271.5,4,0,-50,'flip',l,outQuad)
+		me(271.5,4,0,80,'expand',l,outQuint)
+		me(271.5,3,0,100,'dark',l,outCubic)
+		me(274.5,300,100,100,'dark',e,linear)
+		me(274.5,300,100,100,'hidemines',e,linear)
+		-- HELL YEAH I MANAGED TO FINISH FOR MOD RUSH
+---------------------------------------------------------------------------------------
+----------------------Sort the actions table-------------------------------------------
+---------------------------------------------------------------------------------------
+			
+			function modtable_compare(a,b)
+				return a[1] < b[1]
+			end
+			
+			if table.getn(mod_actions) > 1 then
+				table.sort(mod_actions, modtable_compare)
+			end
+			
+			self:queuecommand('Update');
+			
+		end"
+		
+		UpdateCommand="%function(self)
+			local beat = GAMESTATE:GetSongBeat()
+			
+			if beat>=0 and not checked then
+					local ThingsToGrab = {'BPMDisplay','LifeFrame','ScoreFrame','Lyrics','SongBackground','SongForeground','Overlay','Underlay'}
+					local ThingsToHide = {'BPMDisplay','LifeFrame','ScoreFrame','Overlay','Underlay'}
+					for pn=1,2 do
+						_G['P'..pn] = SCREENMAN:GetTopScreen():GetChild('PlayerP'..pn) or nil;
+						if _G['P'..pn] then
+							table.insert(mod_plr, _G['P'..pn])
+							_G['jud'..pn]=_G['P'..pn]:GetChild('Judgment');
+							_G['com'..pn]=_G['P'..pn]:GetChild('Combo');
+							_G['jud'..pn]:hidden(1)
+							_G['com'..pn]:hidden(1)
+						end
+						table.insert(ThingsToGrab,'LifeP'..pn); table.insert(ThingsToGrab,'ScoreP'..pn);
+						table.insert(ThingsToHide,'LifeP'..pn); table.insert(ThingsToHide,'ScoreP'..pn);
+					end	
+					for i,v in ipairs(ThingsToGrab) do _G[v] = SCREENMAN:GetTopScreen():GetChild(v) or nil end	
+					for i,v in ipairs(ThingsToHide) do if _G[v] then _G[v]:hidden(1) end end
+				checked = true;
+			end
+			mod_curtime = GAMESTATE:GetSongTime()
+			mod_lasttime = 0
+			local deltatime = mod_curtime - mod_lasttime
+			
+---------------------------------------------------------------------------------------
+----------------------Begin table handlers---------------------------------------------
+---------------------------------------------------------------------------------------
+			
+			disable = false;
+			if disable ~= true and checked then
+				if beat > mod_firstSeenBeat+0.1 then -- performance coding!! --
+					-----------------------
+					-- Player mod resets --
+					-----------------------
+					for i=1,2 do
+						GAMESTATE:ApplyModifiers('clearall',i)
+						if _G['init_modsp'..i] then 
+							GAMESTATE:ApplyModifiers(_G['init_modsp'..i],i)
+						end
+					end
+				
+					------------------------------------------------------------------------------
+					-- custom mod reader by TaroNuke edited by WinDEU and re-stolen by TaroNuke --
+					------------------------------------------------------------------------------
+					for i,v in pairs(mods) do
+						if v and table.getn(v) > 3 and v[1] and v[2] and v[3] and v[4] then
+							if beat >=v[1] then
+								if (v[4] == 'len' and beat <=v[1]+v[2]) or (v[4] == 'end' and beat <=v[2]) then
+									if table.getn(v) == 5 then
+										GAMESTATE:ApplyModifiers(v[3],v[5]);
+									else
+										GAMESTATE:ApplyModifiers(v[3]);
+									end
+								end
+							end
+						else
+							v[1] = 0;
+							v[2] = 0;
+							v[3] = '';
+							v[4] = 'error';
+							SCREENMAN:SystemMessage('Bad mod in beat-based table (line '..i..')');
+						end
+					end
+				
+					-----------------------------------------------------------------------------------------------------
+					-- WinDEU's time-based len/end version of the #swag custom mod reader #teamproofofconcept (c) 2015 --
+					-----------------------------------------------------------------------------------------------------
+					for i,v in pairs(mods2) do
+						if v and table.getn(v) > 3 and v[1] and v[2] and v[3] and v[4] then
+							if mod_time >=v[1] then
+								if (v[4] == 'len' and mod_time <=v[1]+v[2]) or (v[4] == 'end' and mod_time <=v[2]) then
+									if table.getn(v) == 5 then
+										GAMESTATE:ApplyModifiers(v[3],v[5]);
+									else
+										GAMESTATE:ApplyModifiers(v[3]);
+									end
+								end
+							end
+						else
+							v[1] = 0;
+							v[2] = 0;
+							v[3] = 'error';
+							v[4] = 'error';
+							SCREENMAN:SystemMessage('Bad mod in time-based table (line '..i..')');
+						end
+					end
+				
+					---------------------------------------
+					-- Ease table (includes func_ease) --
+					---------------------------------------
+					for i,v in pairs(mods_ease) do
+						if v and table.getn(v) > 6 and v[1] and v[2] and v[3] and v[4] and v[5] and v[6] and v[7] then
+							if beat >=v[1] then
+								if (v[6] == 'len' and beat <=v[1]+v[2]) or (v[6] == 'end' and beat <=v[2]) then
+									local strength = v[7](beat - v[1], v[3], v[4] - v[3], v[6] == 'end' and v[2] - v[1] or v[2], v[10], v[11])
+									if type(v[5]) == 'string' then
+										local modstr = v[5] == 'xmod' and strength..'x' or (v[5] == 'cmod' and 'C'..strength or strength..' '..v[5])
+										GAMESTATE:ApplyModifiers('*9999 '..modstr,v[8]);
+									elseif type(v[5]) == 'function' then
+										v[5](strength)
+									end
+								elseif (v[9] and ((v[6] == 'len' and beat <=v[1]+v[2]+v[9]) or (v[6] == 'end' and beat <=v[9]))) then
+									if type(v[5]) == 'string' then
+										local modstr = v[5] == 'xmod' and v[4]..'x' or (v[5] == 'cmod' and 'C'..v[4] or v[4]..' '..v[5])
+										GAMESTATE:ApplyModifiers('*9999 '..modstr,v[8]);
+									elseif type(v[5]) == 'function' then
+										v[5](v[4])
+									end
+								end
+							end
+						else
+							SCREENMAN:SystemMessage('Ease Error! (line '..i..' | beat: '.. v[1] .. ' | mod: '.. v[5] ..')');
+						end
+					end
+				
+					---------------------
+					-- Perframe reader --
+					---------------------
+					if table.getn(mod_perframes)>0 then
+						for i=1,table.getn(mod_perframes) do
+							local a = mod_perframes[i]
+							if beat > a[1] and beat < a[2] then
+								a[3](beat,deltatime);
+							end
+						end
+					end
+				
+					---------------------------------------
+					-- Actions table --
+					---------------------------------------
+					while curaction<=table.getn(mod_actions) and GAMESTATE:GetSongBeat()>=mod_actions[curaction][1] do
+						if mod_actions[curaction][3] or GAMESTATE:GetSongBeat() < mod_actions[curaction][1]+2 then
+							if type(mod_actions[curaction][2]) == 'function' then
+								mod_actions[curaction][2]()
+							elseif type(mod_actions[curaction][2]) == 'string' then
+								MESSAGEMAN:Broadcast(mod_actions[curaction][2]);
+							end
+						end
+						curaction = curaction+1;
+					end
+				end
+			end
+			
+			mod_lasttime = mod_curtime
+			self:sleep(0.02);
+			self:queuecommand('Update');
+
+---------------------------------------------------------------------------------------
+----------------------END DON'T TOUCH IT KIDDO-----------------------------------------
+---------------------------------------------------------------------------------------
+			
+		end"
+		
+	/>
+	
+	<ZZLAER Type="ActorFrame" InitCommand="%function(self) judc = self end"><children>
+	<LAER Type="ActorProxy" InitCommand="%function(self) jud1p = self end"
+	GetProxyMessageCommand="%function(self) if P1 then self:SetTarget(P1:GetChild('Judgment')) end end"/>
+	<LAER Type="ActorProxy" InitCommand="%function(self) jud2p = self end"
+	GetProxyMessageCommand="%function(self) if P2 then self:SetTarget(P2:GetChild('Judgment')) end end"/>
+	</children></ZZLAER>
+	<ZZLAER Type="ActorFrame" InitCommand="%function(self) comc = self end"><children>
+	<LAER Type="ActorProxy" InitCommand="%function(self) com1p = self end"
+	GetProxyMessageCommand="%function(self) if P1 then self:SetTarget(P1:GetChild('Combo')) end end"/>
+	<LAER Type="ActorProxy" InitCommand="%function(self) com2p = self end"
+	GetProxyMessageCommand="%function(self) if P2 then self:SetTarget(P2:GetChild('Combo')) end end"/>
+	</children></ZZLAER>
+	
+	<!--This is for the time based mod reader-->
+	<BitmapText
+		Font="Common Normal"
+		Text="test"
+		OnCommand="x,SCREEN_CENTER_X;y,SCREEN_CENTER_Y;effectclock,music;playcommand,SetTime;hidden,1"
+		SetTimeCommand="%function(self) self:settext(self:GetSecsIntoEffect()); mod_time = tonumber(self:GetText()); self:sleep(0.02); self:queuecommand('SetTime'); end"
+	/>
+	
+</children></ActorFrame></children></ActorFrame>

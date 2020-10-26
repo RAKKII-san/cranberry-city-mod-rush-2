@@ -1,0 +1,14 @@
+slump.lua doesn't want to fucking work on this file and this file alone
+so you're getting the slumpage for free
+I don't know what I did wrong
+but adding slump.lua to this accursed file causes the slumpage to never unlock
+cut me a goddamn break
+
+local prof = PROFILEMAN:GetMachineProfile();
+			
+if prof:GetHighScoreForSongAndSteps( THIS_SONG, DIFFICULTY_HARD ) 
+and prof:GetHighScoreForSongAndSteps( THIS_SONG, DIFFICULTY_HARD ):GetPercentDP() >= 0.00 
+then return true end
+
+return false
+- RAKKII-san
